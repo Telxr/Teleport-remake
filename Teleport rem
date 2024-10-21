@@ -1,0 +1,121 @@
+-- Variables
+local player = game.Players.LocalPlayer
+local players = game.Players
+local UIS = game:GetService("UserInputService")
+
+-- Create GUI
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "TeleportGui"
+
+-- Aesthetic Background
+local background = Instance.new("Frame", screenGui)
+background.Size = UDim2.new(0.3, 0, 0.5, 0)
+background.Position = UDim2.new(0.35, 0, 0.25, 0)
+background.BackgroundColor3 = Color3.fromRGB(255, 192, 203) -- Light pink
+background.BorderSizePixel = 0
+background.Visible = false -- Start invisible
+background.AnchorPoint = Vector2.new(0.5, 0.5)
+background.ZIndex = 1
+background.BackgroundTransparency = 0.1
+
+-- Title
+local title = Instance.new("TextLabel", background)
+title.Size = UDim2.new(1, 0, 0.2, 0)
+title.Text = "Players"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 24
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1
+title.TextStrokeTransparency = 0
+title.ZIndex = 2
+
+-- ScrollFrame to list players
+local scrollFrame = Instance.new("ScrollingFrame", background)
+scrollFrame.Size = UDim2.new(1, 0, 0.75, 0)
+scrollFrame.Position = UDim2.new(0, 0, 0.2, 0)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.ScrollBarThickness = 6
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+-- Aesthetic Pink Scroll Bar
+scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 182, 193)
+
+-- Exit Button
+local exitButton = Instance.new("TextButton", screenGui)
+exitButton.Size = UDim2.new(0.05, 0, 0.05, 0)
+exitButton.Position = UDim2.new(0, 10, 0, 10)
+exitButton.BackgroundColor3 = Color3.fromRGB(255, 105, 180) -- Hot pink
+exitButton.Text = "X"
+exitButton.TextSize = 18
+exitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+exitButton.BorderSizePixel = 0
+exitButton.Visible = false -- Initially hidden
+
+-- Open Button
+local openButton = Instance.new("TextButton", screenGui)
+openButton.Size = UDim2.new(0.05, 0, 0.05, 0)
+openButton.Position = UDim2.new(0, 10, 0, 10)
+openButton.BackgroundColor3 = Color3.fromRGB(255, 105, 180) -- Hot pink
+openButton.Text = "+"
+openButton.TextSize = 18
+openButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+openButton.BorderSizePixel = 0
+
+-- Function to open/close the GUI
+local function toggleGUI(state)
+    background.Visible = state
+    exitButton.Visible = state
+    openButton.Visible = not state
+end
+
+-- Exit button functionality
+exitButton.MouseButton1Click:Connect(function()
+    toggleGUI(false)
+end)
+
+-- Open button functionality
+openButton.MouseButton1Click:Connect(function()
+    toggleGUI(true)
+end)
+
+-- Update player list
+local function updatePlayerList()
+    scrollFrame:ClearAllChildren()
+    local playerCount = #players:GetPlayers()
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, playerCount * 50)
+    
+    for i, playerObj in ipairs(players:GetPlayers()) do
+        local playerButton = Instance.new("TextButton", scrollFrame)
+        playerButton.Size = UDim2.new(1, -10, 0, 40)
+        playerButton.Position = UDim2.new(0, 5, 0, (i - 1) * 50)
+        playerButton.Text = playerObj.Name
+        playerButton.BackgroundColor3 = Color3.fromRGB(255, 182, 193) -- Light pink
+        playerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        playerButton.Font = Enum.Font.Gotham
+        playerButton.TextSize = 18
+        playerButton.BorderSizePixel = 0
+        playerButton.ZIndex = 2
+        
+        -- Teleport on click
+        playerButton.MouseButton1Click:Connect(function()
+            local targetPos = playerObj.Character and playerObj.Character:FindFirstChild("HumanoidRootPart") and playerObj.Character.HumanoidRootPart.Position
+            if targetPos then
+                player.Character:SetPrimaryPartCFrame(CFrame.new(targetPos))
+            end
+        end)
+    end
+end
+
+-- Update the list when players are added or removed
+players.PlayerAdded:Connect(updatePlayerList)
+players.PlayerRemoving:Connect(updatePlayerList)
+
+-- Initial population of the player list
+updatePlayerList()
+
+-- Keybind to toggle GUI
+UIS.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.F then
+        toggleGUI(not background.Visible)
+    end
+end)
